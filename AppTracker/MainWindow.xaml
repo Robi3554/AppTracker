@@ -1,0 +1,25 @@
+﻿<Window x:Class="AppTracker.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="App Usage Tracker" Height="450" Width="650">
+    <Grid>
+        <StackPanel>
+            <TextBlock Text="Currently active process: " />
+            <StackPanel Orientation="Horizontal">
+                <Image Name="AppIconImage" Width="32" Height="32" Margin="5" />
+                <TextBlock Name="CurrentProcessTextBlock" FontSize="16" />
+            </StackPanel>
+            <ListBox Name="AppHistoryListBox" Height="200">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="{Binding Icon}" Width="32" Height="32" Margin="5"/>
+                            <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding UsageTime, StringFormat={}{0:mm\\:ss}}" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </StackPanel>
+    </Grid>
+</Window>
