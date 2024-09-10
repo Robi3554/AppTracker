@@ -12,9 +12,18 @@ namespace AppTracker.DataAccess
     {
         public DbSet<AppUsage> AppUsages { get; set; }
 
+        public AppUsageContext() { }
+
+        public AppUsageContext(DbContextOptions<AppUsageContext> options) : base(options)
+        {
+        }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite("Data Source=appusage.db");
+            if (!optionsBuilder.IsConfigured)
+            {
+                optionsBuilder.UseSqlite("Data Source=apptracker.db");
+            }
         }
     }
 }
