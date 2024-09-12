@@ -1,4 +1,5 @@
 ﻿using AppTracker.DataAccess;
+using AppTracker.DataAccess.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System.Configuration;
@@ -22,6 +23,10 @@ namespace AppTracker
         {
             services.AddDbContext<AppUsageContext>(options =>
                 options.UseSqlite("Data Source=apptracker.db"));
+
+            services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+
+            services.AddTransient<MainWindow>();
         }
 
         protected override void OnStartup(StartupEventArgs e)
@@ -29,11 +34,8 @@ namespace AppTracker
             using (var scope = _serviceProvider.CreateScope())
             {
                 var dbContext = scope.ServiceProvider.GetRequiredService<AppUsageContext>();
-                //dbContext.Database.EnsureCreated(); // Ensures the database is created if it doesn't exist
+                dbContext.Database.EnsureCreated();
             }
-
-            var mainWindow = _serviceProvider.GetService<MainWindow>();
-            //mainWindow.Show();
         }
     }
 

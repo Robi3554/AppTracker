@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿using AppTracker.DataAccess.Repositories;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -8,21 +9,29 @@ namespace AppTracker
 {
     public partial class MainWindow : Window
     {
+        private readonly IRepository<AppUsage> _appUsageRepository;
         private string currentProcess = "None";
         private ObservableCollection<AppUsage> appUsageList = new ObservableCollection<AppUsage>();
         private DispatcherTimer _timer;
         private DateTime _lastSwitchTime;
 
-        public MainWindow()
+        public MainWindow(IRepository<AppUsage> appUsageRepository)
         {
             InitializeComponent();
+            _appUsageRepository = appUsageRepository;
 
             _timer = new DispatcherTimer();
             _timer.Interval = TimeSpan.FromSeconds(1);
             _timer.Tick += Timer_Tick;
             _timer.Start();
 
-            AppHistoryListBox.ItemsSource = appUsageList;
+            LoadAppUsageList();
+        }
+
+        private async void LoadAppUsageList()
+        {
+            var appUsages = await _appUsageRepository.GetAllAsync();
+            AppHistoryListBox.ItemsSource = appUsages;
         }
 
         private void Timer_Tick(object sender, EventArgs e)
@@ -31,20 +40,20 @@ namespace AppTracker
             UpdateUsageTimes();
         }
 
-        private void UpdateProcess()
+        private async void UpdateProcess()
         {
             var process = GetActiveProcess();
             if (process != currentProcess)
             {
                 if (!string.IsNullOrEmpty(currentProcess))
                 {
-                    UpdateAppUsage(currentProcess);
+                    await UpdateAppUsageAsync(currentProcess);
                 }
 
                 currentProcess = process;
                 if (!string.IsNullOrEmpty(currentProcess))
                 {
-                    var existingApp = appUsageList.FirstOrDefault(app => app.Name == currentProcess);
+                    var existingApp = await _appUsageRepository.FindByIdAsync(currentProcess.GetHashCode());
                     if (existingApp == null)
                     {
                         var newApp = new AppUsage
@@ -53,7 +62,7 @@ namespace AppTracker
                             Icon = IconHelper.GetIconBitmapSource(GetExecutablePath(currentProcess)),
                             UsageTime = TimeSpan.Zero
                         };
-                        appUsageList.Add(newApp);
+                        await _appUsageRepository.PostAsync(newApp);
                     }
 
                     _lastSwitchTime = DateTime.Now;
@@ -61,13 +70,14 @@ namespace AppTracker
             }
         }
 
-        private void UpdateAppUsage(string processName)
+        private async Task UpdateAppUsageAsync(string processName)
         {
-            var appUsage = appUsageList.FirstOrDefault(app => app.Name == processName);
+            var appUsage = await _appUsageRepository.FindByIdAsync(processName.GetHashCode());
             if (appUsage != null)
             {
                 var elapsed = DateTime.Now - _lastSwitchTime;
                 appUsage.UsageTime += elapsed;
+                await _appUsageRepository.UpdateAsync(appUsage);
             }
         }
 
